@@ -1,7 +1,7 @@
 FROM python:3.8-slim
 
-ENV WEBSITES_PORT 5000
-EXPOSE ${WEBSITES_PORT}
+ENV PORT 5000
+EXPOSE ${PORT}
 
 RUN mkdir -p /app
 WORKDIR /app
@@ -13,4 +13,4 @@ RUN pipenv install --deploy --system
 
 COPY . /app
 
-CMD ["sh", "-c", "streamlit run --server.port ${WEBSITES_PORT} st_app.py"]
+CMD ["sh", "-c", "streamlit run --server.address 0.0.0.0 --server.port ${PORT} --server.headless true st_app.py"]

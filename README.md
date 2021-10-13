@@ -111,7 +111,7 @@ docker run --rm -it -p "5000:5000" tutorial-azure-app-service-streamlit-app:late
 
 ```bash
 az acr create \
-    --name TutorialAzureAppServiceRegistry \
+    --name tutorialazureappserviceregistry \
     --resource-group tutorial-azure-app-service-group \
     --sku Basic \
     --admin-enabled true
@@ -121,72 +121,72 @@ az acr create \
 
 ```bash
 az acr credential show \
-    --name TutorialAzureAppServiceRegistry \
+    --name tutorialazureappserviceregistry \
     --resource-group tutorial-azure-app-service-group
 ```
 
 4. Log into Azure Container Registry using Docker:
 
 ```bash
-docker login TutorialAzureAppServiceRegistry.azurecr.io --username TutorialAzureAppServiceRegistry
+docker login tutorialazureappserviceregistry.azurecr.io --username tutorialazureappserviceregistry
 ```
 
 5. Tag and push the Docker image to Azure Container Registry:
 
 ```bash
-docker tag tutorial-azure-app-service-streamlit-app TutorialAzureAppServiceRegistry.azurecr.io/tutorial-azure-app-service-streamlit-app:latest
-docker push TutorialAzureAppServiceRegistry.azurecr.io/tutorial-azure-app-service-streamlit-app:latest
+docker tag tutorial-azure-app-service-streamlit-app tutorialazureappserviceregistry.azurecr.io/tutorial-azure-app-service-streamlit-app:latest
+docker push tutorialazureappserviceregistry.azurecr.io/tutorial-azure-app-service-streamlit-app:latest
 ```
 
 6. Verify the Docker image has been pushed:
 
 ```bash
-az acr repository list --name TutorialAzureAppServiceRegistry
+az acr repository list --name tutorialazureappserviceregistry
 ```
 
-7. Create the Azure App Service:
+7. Create the Azure App Service
+   (**WARNING: the F1 SKU does not seem to be working with Streamlit and Websockets in general, use at least B1, cf. [GitHub issue](https://github.com/MicrosoftDocs/azure-docs/issues/49245)**):
 
 ```bash
 az appservice plan create \
     --name tutorial-azure-app-service-streamlit-plan \
     --resource-group tutorial-azure-app-service-group \
     --is-linux \
-    --sku F1
+    --sku B1
 
 az webapp create \
     --name tutorial-azure-app-service-streamlit-app \
     --resource-group tutorial-azure-app-service-group \
     --plan tutorial-azure-app-service-streamlit-plan \
-    --deployment-container-image-name TutorialAzureAppServiceRegistry.azurecr.io/tutorial-azure-app-service-streamlit-app:latest
+    --deployment-container-image-name tutorialazureappserviceregistry.azurecr.io/tutorial-azure-app-service-streamlit-app:latest
 
 az webapp config appsettings set \
     --name tutorial-azure-app-service-streamlit-app \
     --resource-group tutorial-azure-app-service-group \
     --settings WEBSITES_PORT=5000
-
-az webapp identity assign \
-    --name tutorial-azure-app-service-streamlit-app \
-    --resource-group tutorial-azure-app-service-group \
-    --query principalId \
-    --output tsv
-
-az role assignment create \
-    --assignee <principal-id> \
-    --scope /subscriptions/<subscription-id>/resourceGroups/tutorial-azure-app-service-group/providers/Microsoft.ContainerRegistry/registries/TutorialAzureAppServiceRegistry \
-    --role "AcrPull"
-
-az resource update \
-    --ids /subscriptions/<subscription-id>/resourceGroups/tutorial-azure-app-service-group/providers/Microsoft.Web/sites/tutorial-azure-app-service-streamlit-app/config/web \
-    --set properties.acrUseManagedIdentityCreds=True
-
-az webapp config container set \
-    --name tutorial-azure-app-service-streamlit-app \
-    --resource-group tutorial-azure-app-service-group \
-    --docker-custom-image-name TutorialAzureAppServiceRegistry.azurecr.io/tutorial-azure-app-service-streamlit-app:latest \
-    --docker-registry-server-url https://TutorialAzureAppServiceRegistry.azurecr.io
 ```
 
-8. Whenever a new Docker image is pushed to the registry, restart the App Service:
+6. Open the app: https://tutorial-azure-app-service-streamlit-app.azurewebsites.net
+
+
+8. Turn on container logging:
+
+```bash
+az webapp log config \
+    --name tutorial-azure-app-service-streamlit-app \
+    --resource-group tutorial-azure-app-service-group \
+    --docker-container-logging filesystem
+```
+
+9. Display container logging:
+
+```bash
+az webapp log tail \
+    --name tutorial-azure-app-service-streamlit-app \
+    --resource-group tutorial-azure-app-service-group
+```
+
+10. Whenever a new Docker image is pushed to the registry, restart the App Service:
 
 ```bash
 az webapp restart \
