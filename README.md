@@ -39,7 +39,7 @@ Documentation:
 - [Azure App Service deploy with Git](https://docs.microsoft.com/en-us/azure/app-service/deploy-local-git)
 - [Azure App Service configure credentials](https://docs.microsoft.com/en-us/azure/app-service/deploy-configure-credentials?tabs=cli)
 
-1. Configure a deployment user:
+1. Configure a deployment user (might require `git config --system --unset credential.helper` before-hand):
 
 ```bash
 az webapp deployment user set --user-name <username> --password <password>
